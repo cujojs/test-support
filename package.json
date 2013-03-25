@@ -12,10 +12,10 @@
 	"repositories": [
 		{
 			"type": "git",
-			"url": "https://github.com/s2js/test-support"
+			"url": "https://github.com/cujojs/test-support"
 		}
 	],
-	"bugs": "https://github.com/s2js/test-support/issues",
+	"bugs": "https://github.com/cujojs/test-support/issues",
 	"maintainers": [
 		{
 			"name": "Scott Andrews",
