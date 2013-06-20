@@ -99,7 +99,7 @@ exports.drive = function drive(opts) {
 			' on ' + (environment.platform || 'any platform');
 		environment.build = travisJobNumber ? travisJobNumber + ' - ' + travisCommit : 'manual';
 		environment['tunnel-identifier'] = tunnelIdentifier;
-		environment['max-duration'] = 300; // 5 minutes
+		environment['max-duration'] = opts.timeout;
 
 		// most info is below the fold, so images are not helpful, html source is
 		environment['record-video'] = false;

@@ -45,6 +45,11 @@ var opts = require('optimist')
 		default: path.join(__dirname, '..', 'sauce', 'browsers.json'),
 		describe: 'path to browsers.json'
 	})
+	.options('t', {
+		alias: 'timeout',
+		default: process.env.SAUCE_JOB_TIMEOUT || 300, // 5 mins
+		describe: 'Timeout per browser run, in seconds'
+	})
 	.argv;
 
 opts.b = opts.browsers = json5.parse(
