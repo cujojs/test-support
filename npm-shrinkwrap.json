@@ -1,6 +1,6 @@
 {
   "name": "test-support",
-  "version": "0.3.0-pre",
+  "version": "0.3.0",
   "dependencies": {
     "buster": {
       "version": "0.6.3",
