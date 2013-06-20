@@ -3,18 +3,11 @@
 	"version": "0.3.0-pre",
 	"description": "Experimental central test support. Not intended for direct external use.",
 	"keywords": [],
-	"licenses": [
-		{
-			"type": "MIT",
-			"url": "http://opensource.org/licenses/MIT"
-		}
-	],
-	"repositories": [
-		{
-			"type": "git",
-			"url": "https://github.com/cujojs/test-support"
-		}
-	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/cujojs/test-support.git"
+	},
 	"bugs": "https://github.com/cujojs/test-support/issues",
 	"maintainers": [
 		{
