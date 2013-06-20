@@ -24,7 +24,7 @@ var opts = require('optimist')
 	})
 	.options('p', {
 		alias : 'pass',
-		default : process.env.SAUCE_ACCESSKEY || process.env.SELENIUM_PASSWORD,
+		default : process.env.SAUCE_ACCESS_KEY || process.env.SELENIUM_PASSWORD,
 		demand: true,
 		describe: 'Sauce Labs access key, can be defined as an env var SAUCE_PASSWORD'
 	})
@@ -37,7 +37,7 @@ var opts = require('optimist')
 		describe: 'Port of Sauce Labs service'
 	})
 	.options('port', {
-		default: 8080,
+		default: process.env.PORT || 8080,
 		describe: 'Local port to run tunneled service, must be a tunnable port'
 	})
 	.options('b', {
