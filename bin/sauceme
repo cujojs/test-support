@@ -18,22 +18,22 @@ var opts = require('optimist')
 	.describe('m', 'Opens a tunnel for manual test drives')
 	.options('u', {
 		alias: 'user',
-		default: process.env.SELENIUM_USERNAME,
+		default: process.env.SAUCE_USERNAME || process.env.SELENIUM_USERNAME,
 		demand: true,
-		describe: 'Sauce Labs username, can be defined as an env var SELENIUM_USERNAME'
+		describe: 'Sauce Labs username, can be defined as an env var SAUCE_USERNAME'
 	})
 	.options('p', {
 		alias : 'pass',
-		default : process.env.SELENIUM_PASSWORD,
+		default : process.env.SAUCE_ACCESSKEY || process.env.SELENIUM_PASSWORD,
 		demand: true,
-		describe: 'Sauce Labs access key, can be defined as an env var SELENIUM_PASSWORD'
+		describe: 'Sauce Labs access key, can be defined as an env var SAUCE_PASSWORD'
 	})
 	.options('remote-host', {
-		default: process.env.SELENIUM_HOST || 'ondemand.saucelabs.com',
+		default: process.env.SAUCE_HOST || process.env.SELENIUM_HOST || 'ondemand.saucelabs.com',
 		describe: 'Hostname of Sauce Labs service'
 	})
 	.options('remote-port', {
-		default: process.env.SELENIUM_PORT || 80,
+		default: process.env.SAUCE_PORT || process.env.SELENIUM_PORT || 80,
 		describe: 'Port of Sauce Labs service'
 	})
 	.options('port', {
