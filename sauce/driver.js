@@ -5,17 +5,16 @@
  * @author Scott Andrews
  */
 
-var childProcess = require('child_process'),
-    webdriver    = require('wd'),
-    sauceConnect = require('sauce-connect-launcher'),
-    when         = require('when'),
-    sequence     = require('when/sequence'),
-    rest         = require('rest'),
-    interceptor  = require('rest/interceptor'),
-    pathPrefix   = require('rest/interceptor/pathPrefix'),
-    basicAuth    = require('rest/interceptor/basicAuth'),
-    mime         = require('rest/interceptor/mime');
-
+var childProcess          = require('child_process'),
+    webdriver             = require('wd'),
+    sauceConnect          = require('sauce-connect-launcher'),
+    when                  = require('when'),
+    sequence              = require('when/sequence'),
+    rest                  = require('rest'),
+    interceptor           = require('rest/interceptor'),
+    basicAuthInterceptor  = require('rest/interceptor/basicAuth'),
+    mimeInterceptor       = require('rest/interceptor/mime'),
+    pathPrefixInterceptor = require('rest/interceptor/pathPrefix');
 
 /**
  * Distributed in browser testing with Sauce Labs
@@ -23,41 +22,50 @@ var childProcess = require('child_process'),
 exports.drive = function drive(opts) {
 	'use strict';
 
-	var failed, projectName, travisJobNumber, travisCommit, subAccountClient, buster;
+	var username, accessKey, suiteFailed, projectName, travisJobNumber, travisCommit, tunnelIdentifier, buster, sauceRestClient, passedStatusInterceptor;
 
-	failed = false;
+	suiteFailed = false;
 
-	projectName = require('../../../package.json').name;
+	username = opts.user;
+	accessKey = opts.pass;
 	travisJobNumber = process.env.TRAVIS_JOB_NUMBER || '';
 	travisCommit = process.env.TRAVIS_COMMIT || '';
+	tunnelIdentifier = travisJobNumber || Math.floor(Math.random() * 10000);
+
+	try {
+		projectName = require('../../../package.json').name;
+	}
+	catch (e) {
+		projectName = 'unknown';
+	}
 
 	if (travisJobNumber && !/\.1$/.test(travisJobNumber)) {
 		// give up this is not the primary job for the build
 		return;
 	}
 
-	subAccountClient = (function (username, password) {
-
-		if (!travisJobNumber) {
-			// manual build, no need for a sub account
-			/*jshint camelcase:false */
-			return function (request) {
-				return when({
-					request: request,
-					entity: { id: username, access_key: password }
-				});
+	sauceRestClient = rest.chain(mimeInterceptor, { mime: 'application/json' })
+	                      .chain(basicAuthInterceptor, { username: username, password: accessKey })
+	                      .chain(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
+	passedStatusInterceptor = interceptor({
+		request: function (passed, config) {
+			return {
+				method: 'put',
+				path: '/{username}/jobs/{jobId}',
+				params: {
+					username: config.username,
+					jobId: config.jobId
+				},
+				entity: {
+					passed: passed
+				}
 			};
 		}
-
-		return rest.chain(pathPrefix, { prefix: 'https://saucelabs.com/rest/v1/users/{username}' })
-		           .chain(mime, { mime: 'application/json' })
-		           .chain(basicAuth, { username: username, password: password });
-
-	}(opts.user, opts.pass));
+	});
 
 	function launchBuster(port) {
 		var buster, argv;
-		
+
 		buster = {};
 		argv = ['static', '-p', '' + port, '-e', 'browser'];
 
@@ -80,8 +88,8 @@ exports.drive = function drive(opts) {
 		return buster;
 	}
 
-	function testWith(browser, environment, passFailInterceptor) {
-		var d, passFail;
+	function testWith(browser, environment) {
+		var d, updateEnvironmentPassedStatus;
 
 		d = when.defer();
 
@@ -90,6 +98,7 @@ exports.drive = function drive(opts) {
 			environment.browserName + ' ' + (environment.version || 'latest') +
 			' on ' + (environment.platform || 'any platform');
 		environment.build = travisJobNumber ? travisJobNumber + ' - ' + travisCommit : 'manual';
+		environment['tunnel-identifier'] = tunnelIdentifier;
 		environment['max-duration'] = 300; // 5 minutes
 
 		// most info is below the fold, so images are not helpful, html source is
@@ -100,7 +109,7 @@ exports.drive = function drive(opts) {
 		try {
 			browser.init(environment, function (err, sessionID) {
 				console.log('Testing ' + environment.name);
-				passFail = passFailInterceptor({ jobId: sessionID });
+				updateEnvironmentPassedStatus = sauceRestClient.chain(passedStatusInterceptor, { username: username, jobId: sessionID });
 				browser.get('http://localhost:' + opts.port + '/', function (err) {
 					if (err) {
 						throw err;
@@ -109,12 +118,12 @@ exports.drive = function drive(opts) {
 						browser.elementByCssSelector('.stats > h2', function (err, stats) {
 							browser.text(stats, function (err, text) {
 								browser.quit(function () {
-									var passed = text === 'Tests OK';
-									console.log((passed ? 'PASS' : 'FAIL') + ' ' + environment.name);
-									if (!passed) {
-										failed = true;
+									environment.passed = text === 'Tests OK';
+									console.log((environment.passed ? 'PASS' : 'FAIL') + ' ' + environment.name);
+									if (!environment.passed) {
+										suiteFailed = true;
 									}
-									passFail(passed).always(d.resolve);
+									updateEnvironmentPassedStatus(environment.passed).always(d.resolve);
 								});
 							});
 						});
@@ -125,9 +134,9 @@ exports.drive = function drive(opts) {
 		catch (e) {
 			console.log('FAIL ' + environment.name);
 			console.error(e.message);
-			failed = true;
-			if (passFail) {
-				passFail(false);
+			suiteFailed = true;
+			if (updateEnvironmentPassedStatus) {
+				updateEnvironmentPassedStatus(false);
 			}
 			d.reject(e);
 		}
@@ -138,80 +147,45 @@ exports.drive = function drive(opts) {
 	// must use a port that sauce connect will tunnel
 	buster = launchBuster(opts.port);
 
-	// create a sub account to allow multiple concurrent tunnels
-	subAccountClient({ method: 'post', params: { username: opts.user }, entity: { username: opts.user + '-' + travisJobNumber + '-' + Date.now(), password: Math.floor(Math.random() * 1e6).toString(), 'name': 'transient account', email: 'transient@example.com' } }).then(function (subAccount) {
+	console.log('Opening tunnel to Sauce Labs');
+	sauceConnect({ username: username, accessKey: accessKey, tunnelIdentifier: tunnelIdentifier, 'no_progress': true }, function (err, tunnel) {
 
-		var username, accessKey, passFailInterceptor;
+		if (err) {
+			// some tunnel error occur as a normal result of testing
+			// TODO optionally log
+			return;
+		}
 
-		/*jshint camelcase:false */
-		username = subAccount.entity.id;
-		accessKey = subAccount.entity.access_key;
+		if (opts.manual) {
+			// let the user run test manually, hold the tunnel open until this process is killed
+			return;
+		}
 
-		passFailInterceptor = (function (username, password) {
-			return interceptor({
-				request: function (passed, config) {
-					return {
-						method: 'put',
-						path: 'http://saucelabs.com/rest/v1/{username}/jobs/{jobId}',
-						params: {
-							username: username,
-							jobId: config.jobId
-						},
-						entity: {
-							passed: passed
-						}
-					};
-				},
-				client: basicAuth(mime({ mime: 'application/json' }), { username: username, password: password })
-			});
-		}(username, accessKey));
+		var browser, tasks;
 
-		console.log('Opening tunnel to Sauce Labs');
-		sauceConnect({ username: username, accessKey: accessKey, 'no_progress': true }, function (err, tunnel) {
+		browser = webdriver.remote(opts['remote-host'], opts['remote-port'], username, accessKey);
 
-			if (err) {
-				// some tunnel error occur as a normal result of testing
-				// TODO optionally log
-				return;
-			}
+		browser.on('status', function (info) {
+			console.log('\x1b[36m%s\x1b[0m', info);
+		});
+		browser.on('command', function (meth, path) {
+			console.log(' > \x1b[33m%s\x1b[0m: %s', meth, path);
+		});
 
-			if (opts.manual) {
-				// let the user run test manually, hold the tunnel open until this process is killed
-				return;
-			}
+		tasks = opts.browsers.map(function (environment) {
+			return function () {
+				return testWith(browser, environment);
+			};
+		});
 
-			var browser, tasks;
+		sequence(tasks).always(function () {
+			console.log('Stopping buster');
+			buster.exit();
 
-			browser = webdriver.remote(opts['remote-host'], opts['remote-port'], username, accessKey);
+			console.log('Closing tunnel to Sauce Labs');
+			tunnel.close();
 
-			browser.on('status', function (info) {
-				console.log('\x1b[36m%s\x1b[0m', info);
-			});
-			browser.on('command', function (meth, path) {
-				console.log(' > \x1b[33m%s\x1b[0m: %s', meth, path);
-			});
-
-			tasks = opts.browsers.map(function (environment) {
-				return function () {
-					return testWith(browser, environment, passFailInterceptor);
-				};
-			});
-
-			sequence(tasks).always(function () {
-				console.log('Stopping buster');
-				buster.exit();
-
-				console.log('Closing tunnel to Sauce Labs');
-				tunnel.close();
-
-				subAccountClient({ method: 'delete', params: { username: username } }).always(function () {
-					// TODO find out if delete is actaully possible
-
-					// should exit cleanly, but sometimes the tunnel is stuck open
-					process.exit(failed ? 1 : 0);
-				});
-			});
-
+			process.exit(suiteFailed ? 1 : 0);
 		});
 
 	});
