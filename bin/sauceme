@@ -26,7 +26,7 @@ var opts = require('optimist')
 		alias : 'pass',
 		default : process.env.SAUCE_ACCESS_KEY || process.env.SELENIUM_PASSWORD,
 		demand: true,
-		describe: 'Sauce Labs access key, can be defined as an env var SAUCE_PASSWORD'
+		describe: 'Sauce Labs access key, can be defined as an env var SAUCE_ACCESS_KEY'
 	})
 	.options('remote-host', {
 		default: process.env.SAUCE_HOST || process.env.SELENIUM_HOST || 'ondemand.saucelabs.com',
