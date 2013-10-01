@@ -29,7 +29,7 @@
 		"when": "https://github.com/cujojs/when/tarball/2.1.1",
 		"rest": "https://github.com/cujojs/rest/tarball/v0.9.2",
 		"sauce-connect-launcher": "~0.1",
-		"wd": "~0.0",
+		"wd": "~0.1",
 		"json5": "~0.2"
 	}
 }
