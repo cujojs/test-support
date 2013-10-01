@@ -156,6 +156,8 @@ exports.drive = function drive(opts) {
 			return;
 		}
 
+		console.log('Sauce Labs tunnel is ready for traffic');
+
 		if (opts.manual) {
 			// let the user run test manually, hold the tunnel open until this process is killed
 			return;
