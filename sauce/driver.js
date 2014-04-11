@@ -67,13 +67,14 @@ exports.drive = function drive(opts) {
 		var buster, argv;
 
 		buster = {};
-		argv = ['static', '-p', '' + port, '-e', 'browser'];
+		argv = ['-p', '' + port, '-e', 'browser'];
 
 		childProcess.exec(
-			'command -v buster',
+			'command -v buster-static',
 			function (error, stdout /*, stderr */) {
 				if (error) {
-					console.log('Unknown error occurred when running wrapper script.');
+          console.error(error.stack || error);
+					// console.log('Unknown error occurred when running wrapper script.');
 				}
 				else {
 					var mod = stdout.split('\n')[0];
@@ -133,7 +134,7 @@ exports.drive = function drive(opts) {
 		}
 		catch (e) {
 			console.log('FAIL ' + environment.name);
-			console.error(e.message);
+			console.error(e.stack);
 			suiteFailed = true;
 			if (updateEnvironmentPassedStatus) {
 				updateEnvironmentPassedStatus(false);
