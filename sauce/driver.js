@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors
+ * Copyright 2013-2014 the original author or authors
  * @license MIT, see LICENSE.txt for details
  *
  * @author Scott Andrews
@@ -37,11 +37,6 @@ exports.drive = function drive(opts) {
 	}
 	catch (e) {
 		projectName = 'unknown';
-	}
-
-	if (travisJobNumber && !/\.1$/.test(travisJobNumber)) {
-		// give up this is not the primary job for the build
-		return;
 	}
 
 	sauceRestClient = rest.chain(mimeInterceptor, { mime: 'application/json' })
