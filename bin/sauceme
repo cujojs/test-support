@@ -50,6 +50,11 @@ var opts = require('optimist')
 		default: process.env.SAUCE_JOB_TIMEOUT || 300, // 5 mins
 		describe: 'Timeout per browser run, in seconds'
 	})
+	.options('v', {
+		alias: 'verbose',
+		default: false,
+		describe: 'Verbose logging'
+	})
 	.argv;
 
 opts.b = opts.browsers = json5.parse(

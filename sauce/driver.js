@@ -39,9 +39,9 @@ exports.drive = function drive(opts) {
 		projectName = 'unknown';
 	}
 
-	sauceRestClient = rest.chain(mimeInterceptor, { mime: 'application/json' })
-	                      .chain(basicAuthInterceptor, { username: username, password: accessKey })
-	                      .chain(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
+	sauceRestClient = rest.wrap(mimeInterceptor, { mime: 'application/json' })
+	                      .wrap(basicAuthInterceptor, { username: username, password: accessKey })
+	                      .wrap(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
 	passedStatusInterceptor = interceptor({
 		request: function (passed, config) {
 			return {
@@ -84,9 +84,7 @@ exports.drive = function drive(opts) {
 	}
 
 	function testWith(browser, environment) {
-		var d, updateEnvironmentPassedStatus;
-
-		d = when.defer();
+		var updateEnvironmentPassedStatus;
 
 		environment.name = projectName + ' - ' +
 			(travisJobNumber ? travisJobNumber + ' - ' : '') +
@@ -96,47 +94,43 @@ exports.drive = function drive(opts) {
 		environment['tunnel-identifier'] = tunnelIdentifier;
 		environment['max-duration'] = opts.timeout;
 
-		// most info is below the fold, so images are not helpful, html source is
-		environment['record-video'] = false;
-		environment['record-screenshots'] = false;
-		environment['capture-html'] = true;
-
-		try {
-			browser.init(environment, function (err, sessionID) {
-				console.log('Testing ' + environment.name);
-				updateEnvironmentPassedStatus = sauceRestClient.chain(passedStatusInterceptor, { username: username, jobId: sessionID });
-				browser.get('http://localhost:' + opts.port + '/', function (err) {
-					if (err) {
-						throw err;
-					}
-					browser.waitForElementByCssSelector('.stats > h2', 3e5, function (/* err */) {
-						browser.elementByCssSelector('.stats > h2', function (err, stats) {
-							browser.text(stats, function (err, text) {
-								browser.quit(function () {
-									environment.passed = text === 'Tests OK';
-									console.log((environment.passed ? 'PASS' : 'FAIL') + ' ' + environment.name);
-									if (!environment.passed) {
-										suiteFailed = true;
-									}
-									updateEnvironmentPassedStatus(environment.passed).always(d.resolve);
+		// TODO this can be so much nicer with when 3
+		return when.promise(function (resolve, reject) {
+			try {
+				browser.init(environment, function (err, sessionID) {
+					console.log('Testing ' + environment.name);
+					updateEnvironmentPassedStatus = sauceRestClient.wrap(passedStatusInterceptor, { username: username, jobId: sessionID });
+					browser.get('http://localhost:' + opts.port + '/', function (err) {
+						if (err) {
+							throw err;
+						}
+						browser.waitForElementByCssSelector('.stats > h2', 3e5, function (/* err */) {
+							browser.elementByCssSelector('.stats > h2', function (err, stats) {
+								browser.text(stats, function (err, text) {
+									browser.quit(function () {
+										environment.passed = text === 'Tests OK';
+										console.log((environment.passed ? 'PASS' : 'FAIL') + ' ' + environment.name);
+										if (!environment.passed) {
+											suiteFailed = true;
+										}
+										updateEnvironmentPassedStatus(environment.passed).then(resolve, reject);
+									});
 								});
 							});
 						});
 					});
 				});
-			});
-		}
-		catch (e) {
-			console.log('FAIL ' + environment.name);
-			console.error(e.message);
-			suiteFailed = true;
-			if (updateEnvironmentPassedStatus) {
-				updateEnvironmentPassedStatus(false);
 			}
-			d.reject(e);
-		}
-
-		return d.promise;
+			catch (e) {
+				console.log('FAIL ' + environment.name);
+				console.error(e.message);
+				suiteFailed = true;
+				if (updateEnvironmentPassedStatus) {
+					updateEnvironmentPassedStatus(false);
+				}
+				reject(e);
+			}
+		});
 	}
 
 	// must use a port that sauce connect will tunnel
@@ -162,12 +156,14 @@ exports.drive = function drive(opts) {
 
 		browser = webdriver.remote(opts['remote-host'], opts['remote-port'], username, accessKey);
 
-		browser.on('status', function (info) {
-			console.log('\x1b[36m%s\x1b[0m', info);
-		});
-		browser.on('command', function (meth, path) {
-			console.log(' > \x1b[33m%s\x1b[0m: %s', meth, path);
-		});
+		if (opts.verbose) {
+			browser.on('status', function (info) {
+				console.log('\x1b[36m%s\x1b[0m', info);
+			});
+			browser.on('command', function (meth, path) {
+				console.log(' > \x1b[33m%s\x1b[0m: %s', meth, path);
+			});
+		}
 
 		tasks = opts.browsers.map(function (environment) {
 			return function () {
@@ -175,7 +171,7 @@ exports.drive = function drive(opts) {
 			};
 		});
 
-		sequence(tasks).always(function () {
+		sequence(tasks).finally(function () {
 			console.log('Stopping buster');
 			buster.exit();
 
