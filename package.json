@@ -18,12 +18,13 @@
 	],
 	"contributors": [],
 	"bin": {
-		"buster": "./bin/proxyCmd",
+		"buster-test": "./bin/proxyCmd",
+		"buster-static": "./bin/proxyCmd",
 		"jshint": "./bin/proxyCmd",
 		"sauceme": "./bin/sauceme"
 	},
 	"dependencies": {
-		"buster": "https://github.com/scothis/buster/tarball/when-conflict",
+		"buster": "~0.7",
 		"jshint": "~2.5",
 		"optimist": "~0.6",
 		"when": "https://github.com/cujojs/when/tarball/3.3.1",

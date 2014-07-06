@@ -62,10 +62,10 @@ exports.drive = function drive(opts) {
 		var buster, argv;
 
 		buster = {};
-		argv = ['static', '-p', '' + port, '-e', 'browser'];
+		argv = ['-p', '' + port, '-e', 'browser'];
 
 		childProcess.exec(
-			'command -v buster',
+			'command -v buster-static',
 			function (error, stdout /*, stderr */) {
 				if (error) {
 					console.log('Unknown error occurred when running wrapper script.');
