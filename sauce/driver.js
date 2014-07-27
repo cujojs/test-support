@@ -6,7 +6,6 @@
  */
 
 var childProcess          = require('child_process'),
-    webdriver             = require('wd'),
     sauceConnect          = require('sauce-connect-launcher'),
     when                  = require('when'),
     sequence              = require('when/sequence'),
@@ -83,56 +82,6 @@ exports.drive = function drive(opts) {
 		return buster;
 	}
 
-	function testWith(browser, environment) {
-		var updateEnvironmentPassedStatus;
-
-		environment.name = projectName + ' - ' +
-			(travisJobNumber ? travisJobNumber + ' - ' : '') +
-			environment.browserName + ' ' + (environment.version || 'latest') +
-			' on ' + (environment.platform || 'any platform');
-		environment.build = travisJobNumber ? travisJobNumber + ' - ' + travisCommit : 'manual';
-		environment['tunnel-identifier'] = tunnelIdentifier;
-		environment['max-duration'] = opts.timeout;
-
-		// TODO this can be so much nicer with when 3
-		return when.promise(function (resolve, reject) {
-			try {
-				browser.init(environment, function (err, sessionID) {
-					console.log('Testing ' + environment.name);
-					updateEnvironmentPassedStatus = sauceRestClient.wrap(passedStatusInterceptor, { username: username, jobId: sessionID });
-					browser.get('http://localhost:' + opts.port + '/', function (err) {
-						if (err) {
-							throw err;
-						}
-						browser.waitForElementByCssSelector('.stats > h2', 3e5, function (/* err */) {
-							browser.elementByCssSelector('.stats > h2', function (err, stats) {
-								browser.text(stats, function (err, text) {
-									browser.quit(function () {
-										environment.passed = text === 'Tests OK';
-										console.log((environment.passed ? 'PASS' : 'FAIL') + ' ' + environment.name);
-										if (!environment.passed) {
-											suiteFailed = true;
-										}
-										updateEnvironmentPassedStatus(environment.passed).then(resolve, reject);
-									});
-								});
-							});
-						});
-					});
-				});
-			}
-			catch (e) {
-				console.log('FAIL ' + environment.name);
-				console.error(e.message);
-				suiteFailed = true;
-				if (updateEnvironmentPassedStatus) {
-					updateEnvironmentPassedStatus(false);
-				}
-				reject(e);
-			}
-		});
-	}
-
 	// must use a port that sauce connect will tunnel
 	buster = launchBuster(opts.port);
 
@@ -152,26 +101,22 @@ exports.drive = function drive(opts) {
 			return;
 		}
 
-		var browser, tasks;
-
-		browser = webdriver.remote(opts['remote-host'], opts['remote-port'], username, accessKey);
-
-		if (opts.verbose) {
-			browser.on('status', function (info) {
-				console.log('\x1b[36m%s\x1b[0m', info);
-			});
-			browser.on('command', function (meth, path) {
-				console.log(' > \x1b[33m%s\x1b[0m: %s', meth, path);
-			});
-		}
-
-		tasks = opts.browsers.map(function (environment) {
-			return function () {
-				return testWith(browser, environment);
-			};
-		});
-
-		sequence(tasks).finally(function () {
+		sauceRestClient({
+			method: 'post',
+			path: '/{username}/js-tests',
+			params: {
+				username: username
+			},
+			entity: {
+				framework: 'custom',
+				url: 'http://localhost:' + opts.port + '/?reporter=sauce',
+				platforms: opts.browsers,
+				tunnel_identifier: tunnelIdentifier
+			}
+		}).then(function (response) {
+			// poll for success
+			console.log(response);
+		}).finally(function () {
 			console.log('Stopping buster');
 			buster.exit();
 

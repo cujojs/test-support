@@ -25,12 +25,12 @@
 	},
 	"dependencies": {
 		"buster": "~0.7",
+		"buster-reporter-sauce": "~0.1",
 		"jshint": "~2.5",
 		"optimist": "~0.6",
 		"when": "https://github.com/cujojs/when/tarball/3.3.1",
 		"rest": "https://github.com/cujojs/rest/tarball/v1.1.1",
 		"sauce-connect-launcher": "~0.5",
-		"wd": "~0.3",
 		"json5": "~0.2"
 	}
 }
