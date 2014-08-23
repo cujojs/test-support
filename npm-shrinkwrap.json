@@ -1,6 +1,6 @@
 {
   "name": "test-support",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "dependencies": {
     "buster": {
       "version": "0.6.3",
@@ -907,60 +907,111 @@
       "version": "0.9.2",
       "from": "https://github.com/cujojs/rest/tarball/v0.9.2"
     },
-    "sauce-connect-launcher": {
-      "version": "0.1.5",
+    "sauce-tunnel": {
+      "version": "2.1.0",
       "dependencies": {
-        "unzip": {
-          "version": "0.0.4",
+        "request": {
+          "version": "2.21.0",
           "dependencies": {
-            "fstream": {
-              "version": "0.1.22",
+            "qs": {
+              "version": "0.6.6"
+            },
+            "json-stringify-safe": {
+              "version": "4.0.0"
+            },
+            "forever-agent": {
+              "version": "0.5.2"
+            },
+            "tunnel-agent": {
+              "version": "0.3.0"
+            },
+            "http-signature": {
+              "version": "0.9.11",
               "dependencies": {
-                "rimraf": {
-                  "version": "2.1.4"
+                "assert-plus": {
+                  "version": "0.1.2"
                 },
-                "mkdirp": {
-                  "version": "0.3.5"
+                "asn1": {
+                  "version": "0.1.11"
                 },
-                "graceful-fs": {
-                  "version": "1.2.2"
-                },
-                "inherits": {
-                  "version": "1.0.0"
+                "ctype": {
+                  "version": "0.5.2"
                 }
               }
             },
-            "pullstream": {
-              "version": "0.0.4",
+            "hawk": {
+              "version": "0.13.1",
               "dependencies": {
-                "over": {
-                  "version": "0.0.5"
+                "hoek": {
+                  "version": "0.8.5"
                 },
-                "stream-buffers": {
-                  "version": "0.2.4"
-                }
-              }
-            },
-            "binary": {
-              "version": "0.3.0",
-              "dependencies": {
-                "chainsaw": {
-                  "version": "0.1.0",
+                "boom": {
+                  "version": "0.4.2",
                   "dependencies": {
-                    "traverse": {
-                      "version": "0.3.9"
+                    "hoek": {
+                      "version": "0.9.1"
                     }
                   }
                 },
-                "buffers": {
-                  "version": "0.1.1"
+                "cryptiles": {
+                  "version": "0.2.2"
+                },
+                "sntp": {
+                  "version": "0.2.4",
+                  "dependencies": {
+                    "hoek": {
+                      "version": "0.9.1"
+                    }
+                  }
+                }
+              }
+            },
+            "aws-sign": {
+              "version": "0.3.0"
+            },
+            "oauth-sign": {
+              "version": "0.3.0"
+            },
+            "cookie-jar": {
+              "version": "0.3.0"
+            },
+            "node-uuid": {
+              "version": "1.4.1"
+            },
+            "mime": {
+              "version": "1.2.11"
+            },
+            "form-data": {
+              "version": "0.0.8",
+              "dependencies": {
+                "combined-stream": {
+                  "version": "0.0.5",
+                  "dependencies": {
+                    "delayed-stream": {
+                      "version": "0.0.5"
+                    }
+                  }
+                },
+                "async": {
+                  "version": "0.2.10"
                 }
               }
             }
           }
         },
-        "progress": {
-          "version": "0.1.0"
+        "chalk": {
+          "version": "0.4.0",
+          "dependencies": {
+            "has-color": {
+              "version": "0.1.7"
+            },
+            "ansi-styles": {
+              "version": "1.0.0"
+            },
+            "strip-ansi": {
+              "version": "0.1.1"
+            }
+          }
         }
       }
     },

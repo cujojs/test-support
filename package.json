@@ -1,6 +1,6 @@
 {
 	"name": "test-support",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"description": "Experimental central test support. Not intended for direct external use.",
 	"keywords": [],
 	"license": "MIT",
@@ -28,7 +28,7 @@
 		"optimist": "~0.3",
 		"when": "https://github.com/cujojs/when/tarball/2.1.1",
 		"rest": "https://github.com/cujojs/rest/tarball/v0.9.2",
-		"sauce-connect-launcher": "~0.1",
+		"sauce-tunnel": "~2.1",
 		"wd": "~0.1",
 		"json5": "~0.2"
 	}

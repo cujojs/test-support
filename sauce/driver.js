@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors
+ * Copyright 2013-2014 the original author or authors
  * @license MIT, see LICENSE.txt for details
  *
  * @author Scott Andrews
@@ -7,7 +7,7 @@
 
 var childProcess          = require('child_process'),
     webdriver             = require('wd'),
-    sauceConnect          = require('sauce-connect-launcher'),
+    SauceTunnel           = require('sauce-tunnel'),
     when                  = require('when'),
     sequence              = require('when/sequence'),
     rest                  = require('rest'),
@@ -22,7 +22,7 @@ var childProcess          = require('child_process'),
 exports.drive = function drive(opts) {
 	'use strict';
 
-	var username, accessKey, suiteFailed, projectName, travisJobNumber, travisCommit, tunnelIdentifier, buster, sauceRestClient, passedStatusInterceptor;
+	var username, accessKey, suiteFailed, projectName, travisJobNumber, travisCommit, tunnelIdentifier, tunnel, buster, sauceRestClient, passedStatusInterceptor;
 
 	suiteFailed = false;
 
@@ -148,12 +148,13 @@ exports.drive = function drive(opts) {
 	buster = launchBuster(opts.port);
 
 	console.log('Opening tunnel to Sauce Labs');
-	sauceConnect({ username: username, accessKey: accessKey, tunnelIdentifier: tunnelIdentifier, 'no_progress': true }, function (err, tunnel) {
+	tunnel = new SauceTunnel(username, accessKey, tunnelIdentifier, true);
+	tunnel.start(function (status) {
 
-		if (err) {
+		if (status === false) {
 			// some tunnel error occur as a normal result of testing
-			// TODO optionally log
-			return;
+			console.log('Unable to start tunnel to Sauce Labs');
+			process.exit(1);
 		}
 
 		console.log('Sauce Labs tunnel is ready for traffic');
@@ -185,9 +186,9 @@ exports.drive = function drive(opts) {
 			buster.exit();
 
 			console.log('Closing tunnel to Sauce Labs');
-			tunnel.close();
-
-			process.exit(suiteFailed ? 1 : 0);
+			tunnel.stop(function () {
+				process.exit(suiteFailed ? 1 : 0);
+			});
 		});
 
 	});
