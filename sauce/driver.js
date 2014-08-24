@@ -39,9 +39,9 @@ exports.drive = function drive(opts) {
 		projectName = 'unknown';
 	}
 
-	sauceRestClient = rest.chain(mimeInterceptor, { mime: 'application/json' })
-	                      .chain(basicAuthInterceptor, { username: username, password: accessKey })
-	                      .chain(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
+	sauceRestClient = rest.wrap(mimeInterceptor, { mime: 'application/json' })
+	                      .wrap(basicAuthInterceptor, { username: username, password: accessKey })
+	                      .wrap(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
 	passedStatusInterceptor = interceptor({
 		request: function (passed, config) {
 			return {
@@ -104,7 +104,7 @@ exports.drive = function drive(opts) {
 		try {
 			browser.init(environment, function (err, sessionID) {
 				console.log('Testing ' + environment.name);
-				updateEnvironmentPassedStatus = sauceRestClient.chain(passedStatusInterceptor, { username: username, jobId: sessionID });
+				updateEnvironmentPassedStatus = sauceRestClient.wrap(passedStatusInterceptor, { username: username, jobId: sessionID });
 				browser.get('http://localhost:' + opts.port + '/', function (err) {
 					if (err) {
 						throw err;
@@ -118,7 +118,7 @@ exports.drive = function drive(opts) {
 									if (!environment.passed) {
 										suiteFailed = true;
 									}
-									updateEnvironmentPassedStatus(environment.passed).always(d.resolve);
+									updateEnvironmentPassedStatus(environment.passed).finally(d.resolve);
 								});
 							});
 						});
@@ -176,7 +176,7 @@ exports.drive = function drive(opts) {
 			};
 		});
 
-		sequence(tasks).always(function () {
+		sequence(tasks).finally(function () {
 			console.log('Stopping buster');
 			buster.exit();
 
