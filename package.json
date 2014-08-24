@@ -1,6 +1,6 @@
 {
 	"name": "test-support",
-	"version": "0.3.3",
+	"version": "0.4.0",
 	"description": "Experimental central test support. Not intended for direct external use.",
 	"keywords": [],
 	"license": "MIT",
@@ -23,11 +23,11 @@
 		"sauceme": "./bin/sauceme"
 	},
 	"dependencies": {
-		"buster": "https://github.com/scothis/buster/tarball/when-conflict",
-		"jshint": "~1.0",
+		"buster": "~0.7",
+		"jshint": "~2.5",
 		"optimist": "~0.3",
-		"when": "https://github.com/cujojs/when/tarball/2.1.1",
-		"rest": "https://github.com/cujojs/rest/tarball/v0.9.2",
+		"when": "https://github.com/cujojs/when/tarball/3.4.4",
+		"rest": "https://github.com/cujojs/rest/tarball/v1.1.1",
 		"sauce-tunnel": "~2.1",
 		"wd": "~0.1",
 		"json5": "~0.2"

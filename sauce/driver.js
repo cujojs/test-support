@@ -39,11 +39,6 @@ exports.drive = function drive(opts) {
 		projectName = 'unknown';
 	}
 
-	if (travisJobNumber && !/\.1$/.test(travisJobNumber)) {
-		// give up this is not the primary job for the build
-		return;
-	}
-
 	sauceRestClient = rest.chain(mimeInterceptor, { mime: 'application/json' })
 	                      .chain(basicAuthInterceptor, { username: username, password: accessKey })
 	                      .chain(pathPrefixInterceptor, { prefix: 'http://saucelabs.com/rest/v1' });
