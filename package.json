@@ -1,6 +1,6 @@
 {
 	"name": "test-support",
-	"version": "0.4.3",
+	"version": "0.4.4",
 	"description": "Experimental central test support. Not intended for direct external use.",
 	"keywords": [],
 	"license": "MIT",
@@ -18,15 +18,12 @@
 	],
 	"contributors": [],
 	"bin": {
-		"buster-autotest": "./bin/proxyCmd",
-		"buster-server": "./bin/proxyCmd",
-		"buster-static": "./bin/proxyCmd",
-		"buster-test": "./bin/proxyCmd",
+		"buster": "./bin/proxyCmd",
 		"jshint": "./bin/proxyCmd",
 		"sauceme": "./bin/sauceme"
 	},
 	"dependencies": {
-		"buster": "~0.7",
+		"buster": "https://github.com/scothis/buster/tarball/when-conflict",
 		"jshint": "~2.5",
 		"optimist": "~0.3",
 		"when": "https://github.com/cujojs/when/tarball/3.4.4",
